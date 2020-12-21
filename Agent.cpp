@@ -3,7 +3,7 @@
 #include"Agent.h"
 
 
-Agent::Agent(String bdId) :CtrlComponent(bdId) {}
+Agent::Agent(String bdId, String bdType) :CtrlComponent(bdId, bdType) {}
 
 
 // 一个标准的agent消息
@@ -30,7 +30,8 @@ void Agent::setWifiModule(DevBoardESP8266 wifi) {
 	this->wifiModule = wifi;
 }
 void Agent::sendMessage(String msg) {
-	this->wifiModule.sendContent(msg);
+	// this->wifiModule.sendContent(msg);
+	Serial.println(msg);//暂时先这样
 }
 
 void Agent::debugPrint(String str) {
@@ -51,7 +52,7 @@ String Agent::packCoordinatorData() {
 	jsonOut.clear();
 	jsonOut[AgentProtocol::DEV_ID_FROM_JSON] = this->boardId;
 	jsonOut[AgentProtocol::CMD_TYPE_FROM_JSON] = "SEND";//目前统统都是send
-	jsonOut[AgentProtocol::REQ_ID_FROM_JSON] = ++this->reqId;
+	jsonOut[AgentProtocol::REQ_ID_FROM_JSON] = this->reqId;
 	jsonOut[AgentProtocol::RESP_ID_FROM_JSON] = ++this->respId;//AgentProtocol::RESP_ID_FROM_JSON
 	int startTime = micros();
 	jsonOut[AgentProtocol::DATA_FROM_JSON] = agentCaculate();
@@ -63,4 +64,13 @@ String Agent::packCoordinatorData() {
 
 double Agent::compTemp() {
 	return 26.0;
+}
+
+void Agent::addToBuffer(CoordinatorBuffer cb) {
+	//收到的buffer比缓存里的更旧，直接抛弃
+	if (cb.getReqId() <= this->buffer)
+		return;
+	//收到的buffer更新，即ReqId更大
+	this->buffer = cb;
+	return;
 }

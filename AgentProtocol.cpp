@@ -17,11 +17,14 @@ const char* AgentProtocol::REQ_ID_FROM_JSON = ("rq");
 const char* AgentProtocol::RESP_ID_FROM_JSON = ("rp");
 const char* AgentProtocol::CMD_TYPE_FROM_JSON = ("cmd");
 const char* AgentProtocol::COMPUTE_TIME_FROM_JSON = ("ct");
+const char* AgentProtocol::DEV_TYPE_FROM_JSON = "tp";
 
 const char* AgentProtocol::DATA_FROM_JSON = ("dt");
 const char* AgentProtocol::DATA_ISCONV_FROM_JSON = "cv";
 const char* AgentProtocol::DATA_LAMBDA_FROM_JSON = "lm";
 const char* AgentProtocol::DATA_TEMP_FROM_JSON = "t";
+
+const char* AgentProtocol::TYPE_COOLING_TOWER = "ct";
 
 AgentMsg AgentProtocol::parseFromString(String msg) {
 	AgentMsg temp;
@@ -35,6 +38,7 @@ AgentMsg AgentProtocol::parseFromString(String msg) {
 		return temp;
 	}
 	temp.boardId = jsonBuffer[AgentProtocol::DEV_ID_FROM_JSON].as<String>();
+	temp.boardType = jsonBuffer[AgentProtocol::DEV_TYPE_FROM_JSON].as<String>();
 	temp.cmdType = jsonBuffer[AgentProtocol::CMD_TYPE_FROM_JSON].as<String>();
 	temp.compTime = jsonBuffer[AgentProtocol::COMPUTE_TIME_FROM_JSON].as<long>();
 	temp.reqId = jsonBuffer[AgentProtocol::REQ_ID_FROM_JSON].as<long>();

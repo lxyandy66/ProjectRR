@@ -6,7 +6,7 @@
 #include<pt.h>
 #include"AgentProtocol.h"
 #include"AgentProtocol.cpp"
-
+#include<vector>
 
 
 
@@ -14,7 +14,10 @@
 //Coordinator类
 
 
-Coordinator::Coordinator(String bdId) :CtrlComponent(bdId) {}
+Coordinator::Coordinator(String bdId, String bdType) :CtrlComponent(bdId, bdType) {
+	//仅初始化AgentBufferList
+	this->bufferListPool = std::vector<AgentBufferList>();
+}
 // Coordinator::Coordinator() {}
 // Coordinator::~Coordinator() {}
 
@@ -43,6 +46,7 @@ String Coordinator::packCoordinatorData() {
 	//发送coordinator的信息
 	jsonOut.clear();
 	jsonOut[AgentProtocol::DEV_ID_FROM_JSON] = this->boardId;
+	jsonOut[AgentProtocol::DEV_TYPE_FROM_JSON] = this->boardType;
 	jsonOut[AgentProtocol::CMD_TYPE_FROM_JSON] = "SEND";//目前统统都是send
 	jsonOut[AgentProtocol::REQ_ID_FROM_JSON] = ++this->reqId;
 	jsonOut[AgentProtocol::RESP_ID_FROM_JSON] = -1;//AgentProtocol::RESP_ID_FROM_JSON
@@ -81,13 +85,48 @@ void Coordinator::debugPrint(String str) {
 void Coordinator::addToBufferList(AgentBuffer ab) {
 	//暂不进行其他处理
 	//留个空出来，如果需要对比如接收到agent类型进行判断则在此处操作
-	this->bufferList.updateAgentBuffer(ab);//这个操作直接封装在AgentBufferList中，不在Coordinator进行判断
+	int i = indexOfListType(ab.getBoardType());
+	Serial.println("debug: index is " + String(i) + " ab.getBoardType() is " + ab.getBoardType());
+	if (i == -1) {
+		// pool中不存在该类型的list，需要新建
+		Serial.println("List 不存在该类型，构建中：" + ab.getBoardType());
+		AgentBufferList ablTemp(ab.getBoardType());
+		ablTemp.add(ab);
+
+		this->bufferListPool.push_back(ablTemp);//压入一个AgentBufferList
+
+		//压不进去？？？
+
+		// this->bufferListPool[bufferListPool.size() - 1].updateAgentBuffer(ab);
+		Serial.println("List 不存在该类型，已加入, 当前size为" + String(this->bufferListPool.size()) +
+			" current BLP is " + bufferListPool.empty());
+		return;
+	}
+	else
+		this->bufferListPool[i].updateAgentBuffer(ab);//这个操作直接封装在AgentBufferList中，不在Coordinator进行判断
 }
 
 void Coordinator::debugListPrint() {
-	Serial.println("list size is " + this->bufferList.listSize());
-	for (int i = 0;i < bufferList.listSize();i++) {
-		Serial.println(i + " buffer: boardId: " + this->bufferList.getAgentBuffer(i)->getBoardId() +
-			" reqId: " + this->bufferList.getAgentBuffer(i)->getReqId());
+	Serial.println("In debug: current BLP is " + String(bufferListPool.empty()) +
+		" listType size is " + String(this->bufferListPool.size()));
+
+	// for (int j = 0;j < this->bufferListPool.size();j++) {
+	// 	//显示当前list的类型
+	// 	Serial.println("In " + this->bufferListPool[j].getListType() + " list");
+	// 	for (int i = 0;i < bufferListPool[j].listSize();i++) {
+	// 		//显示list每一项的信息
+	// 		Serial.println(String(i) + " buffer: boardId: " + this->bufferListPool[j].getAgentBuffer(i)->getBoardId() +
+	// 			" reqId: " + this->bufferListPool[j].getAgentBuffer(i)->getReqId());
+	// 	}
+	// }
+}
+
+int Coordinator::indexOfListType(String bdType) {
+	for (int i = 0;i < this->bufferListPool.size();i++) {
+		Serial.println("debug: in indexOfListType: current is " + String(i) + " BLP size is " + String(this->bufferListPool.size()));
+		if (this->bufferListPool[i].getListType() == bdType)
+			return i;
 	}
+
+	return -1;//没有命中返回-1
 }

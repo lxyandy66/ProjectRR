@@ -9,26 +9,23 @@
 #include "CtrlComponent.h"
 #include <Chrono.h>
 #include <LightChrono.h>
+#include<ArduinoJson.h>
+#include"BaseBuffer.h"
 
 
-class AgentBuffer {
+class AgentBuffer :public BaseBuffer {
 	//需要在coordinator中缓存的数据
 	//这个AgentBuffer 意思是Coordinator处理从agent来的buffer，不光是信息
 private:
-	String boardId;
-	// String cmdType;//cmdType不缓存，只考虑解析时处理
-	int rqId;//保存是针对第几次的coordinator信号的处理
 	double data;//作为实际需要的数据
 
 public:
 	AgentBuffer();
-	AgentBuffer(String id, int rq, double temp);
+	AgentBuffer(String id, String bdType, long rq, double temp);
 	double getData();
-	String getBoardId();
-	int getReqId();
 	void setData(double dt);
 	static AgentBuffer msgToAgentBuffer(AgentMsg msg);
-	static AgentBuffer msgToAgentBuffer(AgentMsg msg, StaticJsonDocument jd);
+	static AgentBuffer msgToAgentBuffer(AgentMsg msg, JsonDocument* jd);
 };
 
 
@@ -36,8 +33,14 @@ class AgentBufferList {
 private:
 	std::vector<AgentBuffer> list;//作为实际缓存的容器
 	boolean isLegalIndex(int i);
+	String listType;//用于表明该list对应的是什么类型的设备
+
 public:
-	AgentBufferList();
+	AgentBufferList(String listType);
+
+	String getListType();
+	void setListType(String str);
+
 	double getDataById(String id);
 	int findAgentById(String id);
 	void addAgent(String id);

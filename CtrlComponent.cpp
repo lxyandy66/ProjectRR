@@ -1,11 +1,16 @@
 #pragma once
 #include "CtrlComponent.h"
 
-CtrlComponent::CtrlComponent(String bdId) :boardId(bdId) {}
+CtrlComponent::CtrlComponent(String bdId, String bdType) :boardId(bdId), boardType(bdType) {}
+
 
 String CtrlComponent::getBoardId() { return this->boardId; }
 
 void CtrlComponent::setBoardId(String str) { this->boardId = str; }
+
+void CtrlComponent::setBoardType(String str) { this->boardType = str; }
+
+String CtrlComponent::getBoardType() { return this->boardType; }
 
 // CtrlComponent::~CtrlComponent() {}
 
@@ -48,3 +53,7 @@ void CtrlComponent::setLedPin(unsigned long p) {
 	this->pinLed = p;
 }
 unsigned long CtrlComponent::getLedPin() { return this->pinLed; }
+
+JsonDocument* CtrlComponent::getInputBuffer() { return &(this->jsonInputBuffer); }
+JsonDocument* CtrlComponent::getOutputBuffer() { return &(this->jsonOut); }
+JsonDocument* CtrlComponent::getDataBuffer() { return &(this->jsonData); }

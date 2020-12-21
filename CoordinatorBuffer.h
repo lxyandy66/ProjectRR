@@ -18,7 +18,6 @@ private:
 public:
 	CoordinatorBuffer();
 	CoordinatorBuffer(String id, int rq, boolean isConv, double lambda);
-	double getData();
 	static CoordinatorBuffer msgToCoordinatorBuffer(AgentMsg msg);
-	static CoordinatorBuffer msgToCoordinatorBuffer(AgentMsg msg, StaticJsonDocument jd);
+	static CoordinatorBuffer msgToCoordinatorBuffer(AgentMsg msg, JsonDocument jd);
 };

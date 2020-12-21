@@ -19,14 +19,15 @@ private:
 	// String boardId; //继承的
 	Chrono optChrono;//节拍器,coordinator用
 	boolean needBlink;//加个flag
-	AgentBufferList bufferList;
+
+	std::vector<AgentBufferList> bufferListPool;
+	//实际为一个二位数组，一个维度是设备类型，另一个维度是设备ID，这个pool要coordinator来进行维护
+
 	String strBuffer;
-
-
-
 	long reqId;
+
 public:
-	Coordinator(String bdId);
+	Coordinator(String bdId, String bdType);
 	// Coordinator();
 	// ~Coordinator();
 	boolean isConverge();//计算是否收敛
@@ -44,7 +45,10 @@ public:
 
 
 
-	void addToBufferList(AgentBuffer ab);
+	void addToBufferList(AgentBuffer ab);//加入list中，包括对pool中的list进行选取，判断等
+
+	int indexOfListType(String bdType);//判断在pool中是否存在同设备类型的list
+
 	void debugListPrint();
 
 };

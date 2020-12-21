@@ -44,9 +44,10 @@ String tempBuffer;
 String tempDataBuffer;
 boolean ledOn = false;
 const String deviceID = "Coordinator_1";
+const String deviceType = "CoolingTower";
 
 // extern "C" 
-Coordinator co(deviceID); //？？？？
+Coordinator co(deviceID, deviceType); //？？？？
 
 
 
@@ -75,15 +76,15 @@ void processCmd(String cmd) {
 
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println("BEGIN!");
   pinMode(PIN_LED, OUTPUT);
   u8g2.begin();
   co.setLedPin((unsigned long)PIN_LED);
   Serial.println("Hello! after setledPin");
   printString("Hello!");
-  // PT_INIT(&coordinate);
-  // PT_INIT(&trBlinker);
+  // PT_INIT(&trCoordinate);
+  PT_INIT(&trBlinker);
 }
 void loop() {
   // co.threadCoordinate(&trCoordinate);//启动coordinate线程，每秒进行优化
@@ -96,12 +97,14 @@ void loop() {
     Serial.println("CMD: " + cmd);
     AgentMsg tempMsg = AgentProtocol::parseFromString(cmd);
     // printString(cmd);
-    Serial.println("received cmdType: " + tempMsg.cmdType);
-    if (tempMsg.boardId != "")
-      co.addToBufferList(AgentBuffer::msgToAgentBuffer(tempMsg, this->jsonInputBuffer));
+    if (tempMsg.boardId != "") {
+      Serial.println("received cmdType: " + tempMsg.cmdType);
+      co.addToBufferList(AgentBuffer::msgToAgentBuffer(tempMsg, co.getInputBuffer()));
+    }
     co.debugListPrint();
     // Serial.
     processCmd(cmd);//接收并格式化JSON对象，更新list
   }
+  // Serial.println("out of loop");
 }
 

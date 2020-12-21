@@ -6,11 +6,9 @@
 #include "BaseBuffer.h"
 #include "BaseBuffer.cpp"
 
-double CoordinatorBuffer::getData() { return data; }
 
-void CoordinatorBuffer::setData(double dt) { this->data = dt; }
 CoordinatorBuffer::CoordinatorBuffer() {}
-CoordinatorBuffer::CoordinatorBuffer(String id, int rq, double temp) :boardId(id), rqId(rq), data(temp) {}
+CoordinatorBuffer::CoordinatorBuffer(String id, String type, long rq, double temp) :BaseBuffer(id, type, rq), data(temp) {}
 
 
 CoordinatorBuffer CoordinatorBuffer::msgToAgentBuffer(AgentMsg msg) {
@@ -23,5 +21,5 @@ CoordinatorBuffer CoordinatorBuffer::msgToAgentBuffer(AgentMsg msg) {
 CoordinatorBuffer CoordinatorBuffer::msgToAgentBuffer(AgentMsg msg, StaticJsonDocument jd) {
 	jd.clear();
 	deserializeJson(jd, msg.data);
-	return AgentBuffer(msg.boardId, msg.reqId, jd[AgentProtocol::DATA_TEMP_FROM_JSON].as<double>());
+	return AgentBuffer(msg.boardId, msg.reqId, (*jd)[AgentProtocol::DATA_TEMP_FROM_JSON].as<double>());
 }

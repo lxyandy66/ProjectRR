@@ -30,30 +30,23 @@
 
 #define TCP_SERVER_ADDR "192.168.1.104" //TCP服务器地址
 #define TCP_SERVER_PORT 8266            //TCP服务器地址
-#define led D2
+#define PIN_LED D2
 
 SoftwareSerial mySerial(10, 11); // RX, TX10, 11
 DevBoardESP8266 wifi(&mySerial, &Serial, D3);
-const String deviceID = "stm32";
-boolean ledOn = false;
-StaticJsonDocument<256> jsonOut;
-#define PIN_DHT_DATA A1
-#define DHT_TYPE DHT22
-DHT dht22(PIN_DHT_DATA, DHT_TYPE);
+const String deviceID = "Agent1";
+
 
 String tempBuffer;
 
-Agent agent("hello");
+Agent agent(deviceID);
 
 void setup()
 {
   char buffer[50];
-  pinMode(led, OUTPUT);
-  pinMode(D3, OUTPUT);
 
   // Open serial communications and wait for port to open:
   //USB串口测试
-  dht22.begin();
   Serial.begin(9600);
   while (!Serial)
   {
@@ -63,39 +56,43 @@ void setup()
   Serial.println("Goodnight moon!");
 
   // set the data rate for the SoftwareSerial port
-  mySerial.begin(9600);
-  while (!mySerial)
-  {
-    ;
-  }
-  Serial.println("SS initialized!");
-  wifi.hardReset();
+  // mySerial.begin(9600);
+  // while (!mySerial)
+  // {
+  //   ;
+  // }
+  // Serial.println("SS initialized!");
+  // wifi.hardReset();
 
-  //Wi-Fi连接测试
-  Serial.println(F("Connecting to WiFi..."));
-  boolean flag = wifi.connectToAP(F(ESP_SSID), F(ESP_PASS));
+  // //Wi-Fi连接测试
+  // Serial.println(F("Connecting to WiFi..."));
+  // boolean flag = wifi.connectToAP(F(ESP_SSID), F(ESP_PASS));
 
-  if (flag)
-  {
-    Serial.println("Connecting Success");
-  }
-  else
-  {
-    Serial.println("Connecting Failed");
-  }
+  // if (flag)
+  // {
+  //   Serial.println("Connecting Success");
+  // }
+  // else
+  // {
+  //   Serial.println("Connecting Failed");
+  // }
 
-  wifi.connectTCP(F(TCP_SERVER_ADDR), TCP_SERVER_PORT);
+  // wifi.connectTCP(F(TCP_SERVER_ADDR), TCP_SERVER_PORT);
 
-  Serial.println(F("Setup finished"));
+  // Serial.println(F("Setup finished"));
+
+  agent.setLedPin(PIN_LED);
 }
 
 void loop()
 { // run over and over
   if (mySerial.available())
   {
-    String a = mySerial.readString();
+    String msg = mySerial.readString();
     Serial.println("this is a msg: [" + a + "]");
     // Serial.write(mySerial.read().toCharArray());
+
+    CoordinatorBuffer::msgToCoordinatorBuffer(AgentProtocol::parseFromString(msg), agent.getInputBuffer());
     agent.parseMsg(a);
     // processCmd(a);
     return;
@@ -125,30 +122,6 @@ void getIpAddress()
   }
 }
 
-void processCmd(String cmd)
-{
-  Serial.println("CMD: " + cmd);
-  if (cmd.indexOf("SET+LED") != -1)
-  {
-    digitalWrite(led, !ledOn);
-    ledOn = !ledOn;
-    Serial.println("Led changed");
-    return;
-  }
-  if (cmd.indexOf("GET+TH") != -1)
-  {
-    Serial.println("in TH measure");
-    jsonOut["id"] = deviceID;
-    jsonOut["temp"] = String(dht22.readTemperature(), 2);
-    jsonOut["Hum"] = String(dht22.readHumidity(), 2);
-    serializeJson(jsonOut, tempBuffer);
-    jsonOut.clear();
-    wifi.sendContent(tempBuffer);
-    tempBuffer = "";
-    Serial.println("TH measured");
-    return;
-  }
-}
 
 
 
