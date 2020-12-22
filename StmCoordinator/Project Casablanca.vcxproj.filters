@@ -18,7 +18,7 @@
     <None Include="src\arduino folders read me.txt">
       <Filter>Misc Files</Filter>
     </None>
-    <None Include="Project Casablanca.ino" />
+    <None Include="StmCoordinator.ino" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AgentBuffer.cpp">
@@ -63,9 +63,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DevBoardESP8266.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__vm\.Project Casablanca.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
