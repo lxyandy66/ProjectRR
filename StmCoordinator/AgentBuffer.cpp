@@ -64,7 +64,7 @@ AgentBuffer* AgentBufferList::getAgentBuffer(int index) {
 int AgentBufferList::listSize() { return this->list.size(); }
 
 void AgentBufferList::add(AgentBuffer ab) {
-	Serial.println("AgentBuffer will push: detail:" + ab.getBoardId() + ab.getBoardType() + ab.getReqId() + ab.getData());
+	// Serial.println("AgentBuffer will push: detail:" + ab.getBoardId() + ab.getBoardType() + ab.getReqId() + ab.getData());
 	this->list.push_back(ab);
 }
 
@@ -74,9 +74,10 @@ void AgentBufferList::updateAgentBuffer(AgentBuffer ab, int index) {
 	list[index] = ab;
 }
 void AgentBufferList::updateAgentBuffer(AgentBuffer ab) {
+	// Serial.println(ab.getBoardType() + " data: " + ab.getData());
 	int i = findAgentById(ab.getBoardId());
 	if (i == -1) {
-		Serial.println("该list中不存在该ID对象: " + ab.getBoardId());
+		// Serial.println("该list中不存在该ID对象: " + ab.getBoardId());
 		return this->add(ab);
 	}
 

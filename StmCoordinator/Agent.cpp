@@ -6,71 +6,73 @@
 Agent::Agent(String bdId, String bdType) :CtrlComponent(bdId, bdType) {}
 
 
-// 一个标准的agent消息
-//{"cmd":"SEND","id":"pump1","rq":1,"rp":1,"ct":10,"dt":{"temp":20}}
-// 一个标准的agent消息
-//{"cmd":"GET","id":"pump1","rq":1,"rp":1,"ct":10,"dt":{"cv":true,"lm":0.006}}
-//对应解析的动作
-void Agent::parseMsg(String msg) {
-	//其实coordinator的动作更简单，每一秒更新一下就行了
-	this->jsonInputBuffer.clear();
-	deserializeJson(this->jsonInputBuffer, msg);
-	// 从debug输出是否收敛
-	this->debugPrint(jsonInputBuffer[AgentProtocol::DATA_FROM_JSON][AgentProtocol::DATA_ISCONV_FROM_JSON]);//先输出一下
-
-	//this->debugPrint(typeid(jsonInputBuffer[AgentProtocol::DATA_FROM_JSON][AgentProtocol::DATA_ISCONV_FROM_JSON]).name())//这个方法用不了，不能动态编译
-	if (jsonInputBuffer[AgentProtocol::CMD_TYPE_FROM_JSON] == AgentProtocol::CMD_SEND) {
-		// 如果接收到的信息类型是SEND
-
-		if (jsonInputBuffer[AgentProtocol::DATA_FROM_JSON][AgentProtocol::DATA_ISCONV_FROM_JSON] == false)
-	}
-}
-
 void Agent::setWifiModule(DevBoardESP8266 wifi) {
 	this->wifiModule = wifi;
 }
 void Agent::sendMessage(String msg) {
 	// this->wifiModule.sendContent(msg);
-	Serial.println(msg);//暂时先这样
+	this->sendOutput->println("Send: " + msg);//暂时先这样
+}
+
+void Agent::setSendOutput(Stream* s) {
+	this->sendOutput = s;
 }
 
 void Agent::debugPrint(String str) {
-	this->debugSerial->println(str);//仅用于debug
+	Serial.println("In debug: " + str);//仅用于debug
 }
 
 String Agent::agentCaculate() {
 	// 计算coordinator的数据
 	this->jsonData.clear();
 	strBuffer = "";
+	this->timeBuffer = micros();
 	jsonData[AgentProtocol::DATA_TEMP_FROM_JSON] = compTemp();
+	this->timeBuffer = micros() - this->timeBuffer;
 	serializeJson(jsonData, strBuffer);
 	return strBuffer;
 }
 
-String Agent::packCoordinatorData() {
+String Agent::packAgentData() {
 	//发送agent的信息
 	jsonOut.clear();
 	jsonOut[AgentProtocol::DEV_ID_FROM_JSON] = this->boardId;
+	jsonOut[AgentProtocol::DEV_TYPE_FROM_JSON] = this->boardType;
 	jsonOut[AgentProtocol::CMD_TYPE_FROM_JSON] = "SEND";//目前统统都是send
 	jsonOut[AgentProtocol::REQ_ID_FROM_JSON] = this->reqId;
-	jsonOut[AgentProtocol::RESP_ID_FROM_JSON] = ++this->respId;//AgentProtocol::RESP_ID_FROM_JSON
-	int startTime = micros();
+	jsonOut[AgentProtocol::RESP_ID_FROM_JSON] = this->respId++;//AgentProtocol::RESP_ID_FROM_JSON
 	jsonOut[AgentProtocol::DATA_FROM_JSON] = agentCaculate();
-	jsonOut[AgentProtocol::COMPUTE_TIME_FROM_JSON] = micros() - startTime;//Arduino Uno上，精度为4微秒
+	jsonOut[AgentProtocol::COMPUTE_TIME_FROM_JSON] = this->timeBuffer;//Arduino Uno上，精度为4微秒
 	strBuffer = "";//serialize对字符串只能追加
-	serializeJson(jsonOut, strBuffer);
+	serializeJson(jsonOut, strBuffer);//用scoop库会报错
 	return strBuffer;
 }
 
 double Agent::compTemp() {
-	return 26.0;
+	return random(250, 350) / 10.0;
 }
 
 void Agent::addToBuffer(CoordinatorBuffer cb) {
-	//收到的buffer比缓存里的更旧，直接抛弃
-	if (cb.getReqId() <= this->buffer)
+	//对新解析的buffer进行处理
+	//逻辑需要考虑，尤其是出现延迟的处理，即ReqId滞后或重传的处理
+	if (cb.getReqId() < this->coBuffer.getReqId())
+		//如果reqId小于则直接丢弃
 		return;
-	//收到的buffer更新，即ReqId更大
-	this->buffer = cb;
-	return;
+	if (cb.getIsConverge()) {
+		//如果收到的信息表明已经收敛，只更新reqId并缓存
+		this->coBuffer = cb;
+		this->reqId = cb.getReqId();
+		return;
+	}
+	//执行到此表明收到新的信息，且没有收敛
+	this->coBuffer = cb;
+	this->reqId = cb.getReqId();
+	this->respId = 0;
+	this->parseBuffer(this->coBuffer);
+}
+
+
+void Agent::parseBuffer(CoordinatorBuffer cb) {
+	//parse和add我觉得要重新处理一下
+	this->sendMessage(packAgentData());//发送打包的data
 }

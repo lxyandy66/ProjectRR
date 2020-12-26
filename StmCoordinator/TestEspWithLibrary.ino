@@ -1,6 +1,8 @@
 #include <ArduinoJson.h>
 #include <DHT.h>
-#include "../DevBoardESP8266.h"
+#include "DevBoardESP8266.h"
+#include"Agent.h"
+
 
 
 /*
@@ -35,11 +37,12 @@
 SoftwareSerial mySerial(10, 11); // RX, TX10, 11
 DevBoardESP8266 wifi(&mySerial, &Serial, D3);
 const String deviceID = "Agent1";
+const String deviceType = AgentProtocol::TYPE_COOLING_TOWER;
 
 
 String tempBuffer;
 
-Agent agent(deviceID);
+Agent agent(deviceID, deviceType);
 
 void setup()
 {
@@ -47,7 +50,7 @@ void setup()
 
   // Open serial communications and wait for port to open:
   //USB串口测试
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial)
   {
     ; // wait for serial port to connect. Needed for native USB port only
@@ -55,8 +58,10 @@ void setup()
 
   Serial.println("Goodnight moon!");
 
+  // agent.setWifiModule(wifi);
+
   // set the data rate for the SoftwareSerial port
-  // mySerial.begin(9600);
+  // mySerial.begin(115200);
   // while (!mySerial)
   // {
   //   ;
@@ -80,29 +85,29 @@ void setup()
   // wifi.connectTCP(F(TCP_SERVER_ADDR), TCP_SERVER_PORT);
 
   // Serial.println(F("Setup finished"));
-
+  agent.setSendOutput(&Serial);
   agent.setLedPin(PIN_LED);
 }
 
 void loop()
 { // run over and over
-  if (mySerial.available())
-  {
-    String msg = mySerial.readString();
-    Serial.println("this is a msg: [" + a + "]");
+  // if (mySerial.available())//暂时先不考虑wifi模块的软串口
+  while (Serial.available()) {
+    String msg = Serial.readString();
+    Serial.println("this is a msg: [" + msg + "]");
     // Serial.write(mySerial.read().toCharArray());
 
-    CoordinatorBuffer::msgToCoordinatorBuffer(AgentProtocol::parseFromString(msg), agent.getInputBuffer());
-    agent.parseMsg(a);
+    //加入buffer之后自动解析
+    agent.addToBuffer(CoordinatorBuffer::msgToCoordinatorBuffer(AgentProtocol::parseFromString(msg), agent.getInputBuffer()));
     // processCmd(a);
     return;
   }
-  if (Serial.available())
-  {
-    mySerial.write(Serial.read());
-  }
+  // if (Serial.available())
+  // {
+  //   mySerial.write(Serial.read());
+  // }
 
-  agent.setWifiModule(wifi);
+
 }
 
 void getIpAddress()

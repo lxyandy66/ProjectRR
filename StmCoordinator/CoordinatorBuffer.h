@@ -4,6 +4,7 @@
 #include <string.h>
 #include "AgentProtocol.h"
 #include "BaseBuffer.h"
+#include<ArduinoJson.h>
 //#include "BaseBuffer.cpp"
 
 
@@ -17,7 +18,14 @@ private:
 
 public:
 	CoordinatorBuffer();
-	CoordinatorBuffer(String id, int rq, boolean isConv, double lambda);
+	CoordinatorBuffer(String id, String type, long rq, boolean isConv, double lambda);
+
+	boolean getIsConverge();
+	void setIsConverge(boolean isCv);
+
+	double getLambda();
+	void setLambda(double lm);
+
 	static CoordinatorBuffer msgToCoordinatorBuffer(AgentMsg msg);
-	static CoordinatorBuffer msgToCoordinatorBuffer(AgentMsg msg, JsonDocument jd);
+	static CoordinatorBuffer msgToCoordinatorBuffer(AgentMsg msg, JsonDocument* jd);
 };
