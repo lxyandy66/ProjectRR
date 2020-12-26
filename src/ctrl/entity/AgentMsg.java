@@ -24,6 +24,9 @@ public class AgentMsg implements Serializable {
 
 	@Column(name="board_id")
 	private String boardId;
+	
+	@Column(name="board_type")
+	private String boardType;
 
 	@Column(name="cmd_type")
 	private String cmdType;
@@ -62,6 +65,14 @@ public class AgentMsg implements Serializable {
 
 	public void setBoardId(String boardId) {
 		this.boardId = boardId;
+	}
+	
+	public String getBoardType() {
+		return this.boardType;
+	}
+
+	public void setBoardType(String boardType) {
+		this.boardType = boardType;
 	}
 
 	public String getCmdType() {

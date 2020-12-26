@@ -50,6 +50,7 @@ public class PanelServer extends AbstractGridBagPanel {
 	
 	private CtrlPersistor persistor=new CtrlPersistor();//用于持久化的工具
 	private AgentMsg msgBuffer;
+	private AgentMsg socketBuffer;
 
 	private JTextField tfCmd = new JTextField();// 命令输入框
 	private JButton btSend = new JButton("Send");// 发送命令按钮
@@ -85,15 +86,15 @@ public class PanelServer extends AbstractGridBagPanel {
 				//return;
 			}
 			try {
-				msgBuffer= AgentMsgProcessor.msgToObject(str, BigInteger.valueOf(System.nanoTime()));
+				socketBuffer= AgentMsgProcessor.msgToObject(str, BigInteger.valueOf(System.nanoTime()));
 				
 				tsSerial.sendMessage(str);
 				printConsole("已转发至串口: " + str);
-				msgBuffer.setResndTime(BigInteger.valueOf(System.nanoTime()));
-				persistor.setEntityToPersist(msgBuffer);
+				socketBuffer.setResndTime(BigInteger.valueOf(System.nanoTime()));
+				persistor.setEntityToPersist(socketBuffer);
 				new Thread(persistor).start();
-				printConsole("已持久化: " + JSONObject.wrap(msgBuffer).toString());
-				msgBuffer=null;
+				printConsole("已持久化socket消息: " + JSONObject.wrap(socketBuffer).toString());
+				socketBuffer=null;
 				// 例如单片机中为"rq"，在实体化后该字段为"reqId"
 				// 这里应该在控制台输出实体化过的JSON对象，注意部分成员变量的命名：
 
@@ -313,7 +314,7 @@ public class PanelServer extends AbstractGridBagPanel {
 			printText("服务器已启动!");
 			try {
 				/* 这里串口描述符号还是不能写死 */
-				tsSerial = new ThreadSerial("/dev/tty.usbmodem1414203", 9600, serialProc);// 直接赋值并初始化串口
+				tsSerial = new ThreadSerial("/dev/cu.usbmodem1413203", 115200, serialProc);// 直接赋值并初始化串口
 				trSerial = new Thread(tsSerial);
 				trSerial.start();// 执行串口线程
 			} catch (Exception e1) {

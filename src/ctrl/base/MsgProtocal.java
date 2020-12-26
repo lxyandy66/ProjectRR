@@ -20,10 +20,12 @@ public enum MsgProtocal {
 
 	// 以下字符串均从串口获得的JSON字符串中取出
 	DEV_ID_FROM_JSON("id"), 
+	DEV_TYPE_FROM_JSON("tp"),
 	REQ_ID_FROM_JSON("rq"), 
 	RESP_ID_FROM_JSON("rp"), 
 	CMD_TYPE_FROM_JSON("cmd"),
 	COMPUTE_TIME_FROM_JSON("ct"),
+	
 
 	DATA_FROM_JSON("dt");
 

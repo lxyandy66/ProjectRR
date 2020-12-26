@@ -33,7 +33,7 @@ public class AgentMsgProcessor {
 		if(!MsgProtocal.isValidCmd(temp.getCmdType()))
 			throw new IllegalArgumentException("cmd 指令不合法");
 		temp.setBoardId(jo.getString(MsgProtocal.DEV_ID_FROM_JSON.getValue()));
-		
+		temp.setBoardType(jo.getString(MsgProtocal.DEV_TYPE_FROM_JSON.getValue()));
 		temp.setReqId(jo.getInt(MsgProtocal.REQ_ID_FROM_JSON.getValue()));
 		temp.setRespId(jo.getInt(MsgProtocal.RESP_ID_FROM_JSON.getValue()));
 		temp.setCompTime(jo.getBigInteger(MsgProtocal.COMPUTE_TIME_FROM_JSON.getValue()));
