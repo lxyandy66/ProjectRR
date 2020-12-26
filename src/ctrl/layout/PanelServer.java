@@ -28,6 +28,7 @@ import ctrl.base.MsgProtocal;
 import ctrl.entity.AgentMsg;
 import ctrl.msg.AgentMsgProcessor;
 import tool.layout.AbstractGridBagPanel;
+import tool.mcu.SerialManager;
 import tool.mcu.ThreadSerial;
 import tool.network.SocketProcessor;
 import tool.network.ThreadServer;
@@ -43,12 +44,15 @@ public class PanelServer extends AbstractGridBagPanel {
 	 * 单点发送时设置的socket选择器
 	 * 
 	 */
-	private int socketSelector = -1;
+	private String serialSelector = "";
+	
+	private int baudSelector=-1;
+	
+	private String[] baudRate= {"9600","115200"};
 
 	private static int agentIdCounter = 0;
-	
-	
-	private CtrlPersistor persistor=new CtrlPersistor();//用于持久化的工具
+
+	private CtrlPersistor persistor = new CtrlPersistor();// 用于持久化的工具
 	private AgentMsg msgBuffer;
 	private AgentMsg socketBuffer;
 
@@ -78,29 +82,29 @@ public class PanelServer extends AbstractGridBagPanel {
 		@Override
 		public void processIncomeMsg(String str) {
 			// TODO Auto-generated method stub
-			//先直接转发，如果串口关闭则忽略这条消息
-			if(str.trim().equals("")||str==null)
+			// 先直接转发，如果串口关闭则忽略这条消息
+			if (str.trim().equals("") || str == null)
 				return;
 			if (tsSerial == null) {
 				printConsole("Msg: " + str + " failed resend! " + "串口未启动");
-				//return;
+				// return;
 			}
 			try {
-				socketBuffer= AgentMsgProcessor.msgToObject(str, BigInteger.valueOf(System.nanoTime()));
-				
+				socketBuffer = AgentMsgProcessor.msgToObject(str, BigInteger.valueOf(System.nanoTime()));
+
 				tsSerial.sendMessage(str);
 				printConsole("已转发至串口: " + str);
 				socketBuffer.setResndTime(BigInteger.valueOf(System.nanoTime()));
 				persistor.setEntityToPersist(socketBuffer);
 				new Thread(persistor).start();
 				printConsole("已持久化socket消息: " + JSONObject.wrap(socketBuffer).toString());
-				socketBuffer=null;
+				socketBuffer = null;
 				// 例如单片机中为"rq"，在实体化后该字段为"reqId"
 				// 这里应该在控制台输出实体化过的JSON对象，注意部分成员变量的命名：
 
-			} catch(IllegalArgumentException e) {
+			} catch (IllegalArgumentException e) {
 				printConsole("Msg: " + str + " 指令不合法! " + e.getMessage());
-			}catch (IOException e) {
+			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				printConsole("Msg: " + str + " failed resend! " + e.getMessage());
 				e.printStackTrace();
@@ -142,28 +146,28 @@ public class PanelServer extends AbstractGridBagPanel {
 		@Override
 		public void processIncomeMsg(String str) {
 			// TODO Auto-generated method stub
-			if(str.trim().equals("")||str==null)
+			if (str.trim().equals("") || str == null)
 				return;
-			
+
 			if (server == null) {
 				printConsole("Msg: " + str + " failed resend! " + "服务器未启动");
-				//return;
+				// return;
 			}
 			try {
-				msgBuffer= AgentMsgProcessor.msgToObject(str, BigInteger.valueOf(System.currentTimeMillis()));
+				msgBuffer = AgentMsgProcessor.msgToObject(str, BigInteger.valueOf(System.currentTimeMillis()));
 				server.sendBroardcast(str);
 				printConsole("已转发至串口: " + str);
 				msgBuffer.setResndTime(BigInteger.valueOf(System.currentTimeMillis()));
 				persistor.setEntityToPersist(msgBuffer);
 				new Thread(persistor).start();
 				printConsole("已持久化: " + JSONObject.wrap(msgBuffer).toString());
-				msgBuffer=null;
+				msgBuffer = null;
 				// 例如单片机中为"rq"，在实体化后该字段为"reqId"
 				// 这里应该在控制台输出实体化过的JSON对象，注意部分成员变量的命名：
 
-			} catch(IllegalArgumentException e) {
+			} catch (IllegalArgumentException e) {
 				printConsole("Msg: " + str + " 指令不合法! " + e.getMessage());
-			}catch (Exception e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				printConsole("Msg: " + str + " failed resend! " + e.getMessage());
 				e.printStackTrace();
@@ -191,22 +195,20 @@ public class PanelServer extends AbstractGridBagPanel {
 
 	private ThreadSerial tsSerial;
 
-	private JComboBox<String> combTarget = new JComboBox<String>(
-			server.getClientListName().stream().toArray(String[]::new));
-
-
+	private JComboBox<String> serialComboList = new JComboBox<String>(
+			SerialManager.getAllComPort().toArray(String[]::new));
 
 	/**
 	 * 目标下拉框的监听器
 	 */
-	private ItemListener combListen = new ItemListener() {
+	private ItemListener serialCombListen = new ItemListener() {
 
 		@Override
 		public void itemStateChanged(ItemEvent e) {
 			// TODO Auto-generated method stub
 			if (e.getStateChange() == ItemEvent.SELECTED) {
-				socketSelector = combTarget.getSelectedIndex();
-				textHint.setText("Set target as" + server.getClientList().get(socketSelector).getFullDescr());
+				serialSelector = SerialManager.getAllComPort().get(serialComboList.getSelectedIndex());
+				textHint.setText("Set target as" + serialSelector);
 			}
 		}
 	};
@@ -215,6 +217,19 @@ public class PanelServer extends AbstractGridBagPanel {
 	//
 	// }
 
+	private JComboBox<String> baudComboList=new JComboBox<>(baudRate);
+	private ItemListener cbBaudListen=new ItemListener() {
+		
+		@Override
+		public void itemStateChanged(ItemEvent e) {
+			// TODO Auto-generated method stub
+			if (e.getStateChange() == ItemEvent.SELECTED) {
+				baudSelector =Integer.valueOf(baudRate[baudComboList.getSelectedIndex()]);
+				textHint.setText("Set baud as " + baudSelector);
+			}
+		}
+	};
+	
 	/**
 	 * 广播单选框的监听器 设置是否广播并对下拉框的可编辑性进行联动
 	 */
@@ -225,10 +240,10 @@ public class PanelServer extends AbstractGridBagPanel {
 			// TODO Auto-generated method stub
 			isBroadcast = cbBroadcast.isSelected();
 			textHint.setText("Set as " + (isBroadcast ? "Broadcast" : "Singal") + " mode");
-			combTarget.setEnabled(!isBroadcast);
+			serialComboList.setEnabled(!isBroadcast);
 		}
 	};
-
+	
 	/**
 	 * 直接与TextArea交互
 	 * 
@@ -259,9 +274,10 @@ public class PanelServer extends AbstractGridBagPanel {
 //		constraints.fill = GridBagConstraints.BOTH;
 		addComponent(btSend, 0, 4, 1, 2);
 		addComponent(new JLabel("Target:"), 1, 0, 1, 1);
-		addComponent(combTarget, 1, 1, 2, 1);
+		addComponent(serialComboList, 1, 1, 2, 1);
 		constraints.anchor = GridBagConstraints.CENTER;
-		addComponent(cbBroadcast, 1, 3, 1, 1);
+//		addComponent(cbBroadcast, 1, 3, 1, 1);
+		addComponent(baudComboList, 1, 3, 1, 1);
 		addComponent(btShutdown, 6, 1, 1, 1);
 		addComponent(btInfo, 6, 2, 1, 1);
 		addComponent(btStart, 6, 3, 1, 1);
@@ -274,8 +290,10 @@ public class PanelServer extends AbstractGridBagPanel {
 		btSend.addActionListener(this);
 		btShutdown.addActionListener(this);
 		btStart.addActionListener(this);
-		combTarget.addActionListener(this);
-		combTarget.addItemListener(combListen);
+		serialComboList.addActionListener(this);
+		serialComboList.addItemListener(serialCombListen);
+		baudComboList.addActionListener(this);
+		baudComboList.addItemListener(cbBaudListen);
 		cbBroadcast.addItemListener(cbListen);
 
 	}
@@ -314,7 +332,7 @@ public class PanelServer extends AbstractGridBagPanel {
 			printText("服务器已启动!");
 			try {
 				/* 这里串口描述符号还是不能写死 */
-				tsSerial = new ThreadSerial("/dev/cu.usbmodem1413203", 115200, serialProc);// 直接赋值并初始化串口
+				tsSerial = new ThreadSerial(serialSelector, baudSelector, serialProc);// 直接赋值并初始化串口
 				trSerial = new Thread(tsSerial);
 				trSerial.start();// 执行串口线程
 			} catch (Exception e1) {
@@ -322,9 +340,10 @@ public class PanelServer extends AbstractGridBagPanel {
 				serialProc.printConsole(e1.getMessage());
 				tsSerial = null;
 				e1.printStackTrace();
+				return;
 			}
 			printText("串口已启动!");
-			EntityManagerFactory emf=Persistence.createEntityManagerFactory("PU_Control");
+			EntityManagerFactory emf = Persistence.createEntityManagerFactory("PU_Control");
 			persistor.initDataBase(emf);
 			printText("持久化程序已启动!");
 		} else if (e.getSource().equals(btSend)) {
@@ -332,14 +351,15 @@ public class PanelServer extends AbstractGridBagPanel {
 				if (isBroadcast) {
 					server.sendBroardcast(tfCmd.getText().trim());
 					tsSerial.sendMessage(tfCmd.getText().trim());
-				} else {
-					if (socketSelector == -1) {
-						printText("没有选中的目标");
-						return;
-					} else {
-						server.getClientList().get(socketSelector).sendMessage(tfCmd.getText().trim());
-					}
-				}
+				} 
+//				else {
+//					if (serialSelector == -1) {
+//						printText("没有选中的目标");
+//						return;
+//					} else {
+//						server.getClientList().get(serialSelector).sendMessage(tfCmd.getText().trim());
+//					}
+//				}
 			} catch (Exception e2) {
 				// TODO: handle exception
 			}
