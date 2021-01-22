@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="deploy" default="remotedebug" basedir=".">
+	<property name="raspberrypi" value="192.168.3.7" /><!--172.16.33.34  -->
+	<property name="raspberryfolder" value="~" />
+	<property name="username" value="pi" />
+	<property name="password" value="raspberry" /><!-- Lixy1995 -->
+
+	<target name="remotedebug">
+		<first id="jars">
+			<fileset dir="target" includes="**/*.jar" />
+		</first>
+		<pathconvert pathsep="," property="jar.path" refid="jars" />
+		<basename file="${jar.path}" property="jar.filename" />
+		<echo>"Found application ${jar.path}"</echo>
+
+		<echo>"Copying application to
+			${raspberrypi}:${raspberryfolder}/${jar.filename}"
+		</echo>
+		<scp localfile="${jar.path}"
+			todir="${username}:${password}@${raspberrypi}:${raspberryfolder}"
+			trust="true" />
+		
+		<!--{"cmd":"SEND","id":"pump1","tp":"pump","rq":1,"rp":1,"ct":10,"dt":"{\"t\":20.1}"}-->
+
+
+		<!-- <java classname="LaunchViewer" fork="true">
+			<classpath refid="classpath">
+			</classpath>
+		</java> -->
+		
+		<echo>"Starting ${raspberrypi}:${raspberryfolder}/${jar.filename} in
+			debug mode"
+		</echo>
+		
+		<!-- 这里相当于还是实现一个拷贝到再执行的功能 -->
+		
+		<!-- 垃圾类库-Djava.library.path=/usr/lib/jni-->
+		<sshexec host="${raspberrypi}" username="${username}"
+			password="${password}" trust="true" failonerror="true" usepty="true"
+			command="export DISPLAY=:0.0; java -Xdebug  -Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=y -jar ${jar.filename}" />
+	</target>
+</project>

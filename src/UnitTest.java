@@ -81,39 +81,34 @@ public class UnitTest {
 //		JSONObject jo=new JSONObject(in.nextLine());
 //		System.out.println("success jsonlized: "+jo.toString());
 //		System.out.println("init: "+MsgProtocal.getInitJsonStr(123));
-		
-		DatabaseImporter importer=new DatabaseImporter() {
-			
-			@Override
-			public void persistTool(EntityManager em) {
-				// TODO Auto-generated method stub
-				
+		if(false){//持久化测试部分
+			DatabaseImporter importer = new DatabaseImporter() {
+
+				@Override
+				public void persistTool(EntityManager em) {
+					// TODO Auto-generated method stub
+
+				}
+			};
+			ArrayList<AgentMsg> msgArray = new ArrayList<>();
+			AgentMsg msg = AgentMsgProcessor.msgToObject(
+					"{\"cmd\":\"TEST\",\"id\":\"pump1\",\"rq\":1,\"rp\":1,\"ct\":10,\"dt\":{\"temp\":20}}",
+					BigInteger.valueOf(System.currentTimeMillis()));
+			msg.setResndTime(BigInteger.valueOf(System.currentTimeMillis()));
+			msgArray.add(msg);
+
+			try {
+				EntityManagerFactory emf = Persistence.createEntityManagerFactory("PU_Control");
+				importer.initDataBase(emf);
+
+				importer.persistEntity(msgArray);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-		};
-		ArrayList<AgentMsg> msgArray=new ArrayList<>();
-		AgentMsg msg = AgentMsgProcessor.msgToObject(
-				"{\"cmd\":\"TEST\",\"id\":\"pump1\",\"rq\":1,\"rp\":1,\"ct\":10,\"dt\":{\"temp\":20}}",
-				BigInteger.valueOf(System.currentTimeMillis()));
-		msg.setResndTime(BigInteger.valueOf(System.currentTimeMillis()));
-		msgArray.add(msg);
-		
-		
-		try {
-			EntityManagerFactory emf=Persistence.createEntityManagerFactory("PU_Control");
-			importer.initDataBase(emf);
-
-
-
-			importer.persistEntity(msgArray);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 		
-//		msg.setCmdType("TEST");
-		//{"cmd":"GET","id":"pump1","rq":1,"rp":1,"ct":10,"dt":{"temp":20}}
-		System.out.println(JSONObject.wrap(msg.getData()).toString());
-		;
+
 
 //		SerialMessenger sm=new SerialMessenger();
 //		String cmd=null;

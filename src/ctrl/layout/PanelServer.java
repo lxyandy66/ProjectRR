@@ -45,10 +45,10 @@ public class PanelServer extends AbstractGridBagPanel {
 	 * 
 	 */
 	private String serialSelector = "";
-	
-	private int baudSelector=-1;
-	
-	private String[] baudRate= {"9600","115200"};
+
+	private int baudSelector = -1;
+
+	private String[] baudRate = { "9600", "115200" };
 
 	private static int agentIdCounter = 0;
 
@@ -92,7 +92,7 @@ public class PanelServer extends AbstractGridBagPanel {
 			try {
 				socketBuffer = AgentMsgProcessor.msgToObject(str, BigInteger.valueOf(System.nanoTime()));
 
-				tsSerial.sendMessage(str);
+//				tsSerial.sendMessage(str);
 				printConsole("已转发至串口: " + str);
 				socketBuffer.setResndTime(BigInteger.valueOf(System.nanoTime()));
 				persistor.setEntityToPersist(socketBuffer);
@@ -104,7 +104,12 @@ public class PanelServer extends AbstractGridBagPanel {
 
 			} catch (IllegalArgumentException e) {
 				printConsole("Msg: " + str + " 指令不合法! " + e.getMessage());
-			} catch (IOException e) {
+				e.printStackTrace();
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				printConsole("Msg: " + str + " failed resend! " + e.getMessage());
+//				e.printStackTrace();
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				printConsole("Msg: " + str + " failed resend! " + e.getMessage());
 				e.printStackTrace();
@@ -167,6 +172,7 @@ public class PanelServer extends AbstractGridBagPanel {
 
 			} catch (IllegalArgumentException e) {
 				printConsole("Msg: " + str + " 指令不合法! " + e.getMessage());
+				e.printStackTrace();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				printConsole("Msg: " + str + " failed resend! " + e.getMessage());
@@ -195,8 +201,7 @@ public class PanelServer extends AbstractGridBagPanel {
 
 	private ThreadSerial tsSerial;
 
-	private JComboBox<String> serialComboList = new JComboBox<String>(
-			SerialManager.getAllComPort().toArray(String[]::new));
+	private JComboBox<String> serialComboList = new JComboBox<String>(SerialManager.getAllComPort());
 
 	/**
 	 * 目标下拉框的监听器
@@ -207,8 +212,8 @@ public class PanelServer extends AbstractGridBagPanel {
 		public void itemStateChanged(ItemEvent e) {
 			// TODO Auto-generated method stub
 			if (e.getStateChange() == ItemEvent.SELECTED) {
-				serialSelector = SerialManager.getAllComPort().get(serialComboList.getSelectedIndex());
-				textHint.setText("Set target as" + serialSelector);
+				serialSelector = SerialManager.getAllComPort()[serialComboList.getSelectedIndex()];
+				textHint.setText("Set target as: " + serialSelector);
 			}
 		}
 	};
@@ -217,19 +222,19 @@ public class PanelServer extends AbstractGridBagPanel {
 	//
 	// }
 
-	private JComboBox<String> baudComboList=new JComboBox<>(baudRate);
-	private ItemListener cbBaudListen=new ItemListener() {
-		
+	private JComboBox<String> baudComboList = new JComboBox<>(baudRate);
+	private ItemListener cbBaudListen = new ItemListener() {
+
 		@Override
 		public void itemStateChanged(ItemEvent e) {
 			// TODO Auto-generated method stub
 			if (e.getStateChange() == ItemEvent.SELECTED) {
-				baudSelector =Integer.valueOf(baudRate[baudComboList.getSelectedIndex()]);
+				baudSelector = Integer.valueOf(baudRate[baudComboList.getSelectedIndex()]);
 				textHint.setText("Set baud as " + baudSelector);
 			}
 		}
 	};
-	
+
 	/**
 	 * 广播单选框的监听器 设置是否广播并对下拉框的可编辑性进行联动
 	 */
@@ -243,7 +248,7 @@ public class PanelServer extends AbstractGridBagPanel {
 			serialComboList.setEnabled(!isBroadcast);
 		}
 	};
-	
+
 	/**
 	 * 直接与TextArea交互
 	 * 
@@ -324,12 +329,19 @@ public class PanelServer extends AbstractGridBagPanel {
 				e1.printStackTrace();
 			}
 		} else if (e.getSource().equals(btStart)) {
+			
+			
 			if (trServer != null && trServer.isAlive()) {
 				printHint("服务器已经启动了");
 				return;
 			}
 			trServer.start();// 这里的start对线程操作，线程调用之后自动调用run方法
 			printText("服务器已启动!");
+
+			EntityManagerFactory emf = Persistence.createEntityManagerFactory("PU_Control");
+			persistor.initDataBase(emf);
+			printText("持久化程序已启动!");
+			
 			try {
 				/* 这里串口描述符号还是不能写死 */
 				tsSerial = new ThreadSerial(serialSelector, baudSelector, serialProc);// 直接赋值并初始化串口
@@ -340,18 +352,17 @@ public class PanelServer extends AbstractGridBagPanel {
 				serialProc.printConsole(e1.getMessage());
 				tsSerial = null;
 				e1.printStackTrace();
-				return;
+				// return;//来哥们你告诉我你return掉是想干什么🌚
 			}
 			printText("串口已启动!");
-			EntityManagerFactory emf = Persistence.createEntityManagerFactory("PU_Control");
-			persistor.initDataBase(emf);
-			printText("持久化程序已启动!");
+
+			
 		} else if (e.getSource().equals(btSend)) {
 			try {
 				if (isBroadcast) {
 					server.sendBroardcast(tfCmd.getText().trim());
 					tsSerial.sendMessage(tfCmd.getText().trim());
-				} 
+				}
 //				else {
 //					if (serialSelector == -1) {
 //						printText("没有选中的目标");

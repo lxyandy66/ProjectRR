@@ -6,19 +6,20 @@ import javax.persistence.EntityManager;
 import ctrl.entity.AgentMsg;
 import tool.data.processor.DatabaseImporter;
 
-/**继承至DatabaseImporter，新增一个多线程的持久化的接口
+/**
+ * 继承至DatabaseImporter，新增一个多线程的持久化的接口
+ * 
  * @author Mr_Li
  *
  */
-public class CtrlPersistor extends DatabaseImporter implements Runnable{
-	
-	
+public class CtrlPersistor extends DatabaseImporter implements Runnable {
+
 	private AgentMsg persistEntity;
-	
+
 	public void setEntityToPersist(AgentMsg e) {
-		this.persistEntity=e;
+		this.persistEntity = e;
 	}
-	
+
 	public void closeImporter() {
 		try {
 			closeConnect();
@@ -30,8 +31,12 @@ public class CtrlPersistor extends DatabaseImporter implements Runnable{
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
-		if(this.persistEntity==null||this==null||!isInit())
+		if (this.persistEntity == null || this == null || !isInit()) {
+			System.out.println(this.persistEntity == null || this == null ? "persistEntity is null!!"
+					: (!isInit() ? "Doesnt init EM" : "other issue"));
 			return;
+		}
+
 		try {
 			persistEntity(this.persistEntity);
 		} catch (IOException e) {
@@ -44,7 +49,7 @@ public class CtrlPersistor extends DatabaseImporter implements Runnable{
 	@Override
 	public void persistTool(EntityManager em) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }
