@@ -46,9 +46,11 @@ public class PanelServer extends AbstractGridBagPanel {
 	 */
 	private String serialSelector = "";
 
-	private int baudSelector = -1;
+	
 
 	private String[] baudRate = { "9600", "115200" };
+	
+	private int baudSelector = Integer.valueOf(baudRate[0]);
 
 	private static int agentIdCounter = 0;
 
@@ -90,14 +92,14 @@ public class PanelServer extends AbstractGridBagPanel {
 				// return;
 			}
 			try {
-				socketBuffer = AgentMsgProcessor.msgToObject(str, BigInteger.valueOf(System.nanoTime()));
+				socketBuffer = AgentMsgProcessor.msgToObject(str.trim(), BigInteger.valueOf(System.nanoTime()));
 
-//				tsSerial.sendMessage(str);
-				printConsole("已转发至串口: " + str);
+				tsSerial.sendMessage(str.trim());
+				printConsole("已转发至串口: " + socketBuffer.whoIAm());
 				socketBuffer.setResndTime(BigInteger.valueOf(System.nanoTime()));
 				persistor.setEntityToPersist(socketBuffer);
 				new Thread(persistor).start();
-				printConsole("已持久化socket消息: " + JSONObject.wrap(socketBuffer).toString());
+				printConsole("已持久化socket消息: " + socketBuffer.whoIAm() );//JSONObject.wrap(socketBuffer).toString()
 				socketBuffer = null;
 				// 例如单片机中为"rq"，在实体化后该字段为"reqId"
 				// 这里应该在控制台输出实体化过的JSON对象，注意部分成员变量的命名：
@@ -159,24 +161,24 @@ public class PanelServer extends AbstractGridBagPanel {
 				// return;
 			}
 			try {
-				msgBuffer = AgentMsgProcessor.msgToObject(str, BigInteger.valueOf(System.currentTimeMillis()));
-				server.sendBroardcast(str);
-				printConsole("已转发至串口: " + str);
+				msgBuffer = AgentMsgProcessor.msgToObject(str.trim(), BigInteger.valueOf(System.currentTimeMillis()));
+				server.sendBroardcast(str.trim()+"\r\n");
+				printConsole("已转发至客户端: " + msgBuffer.whoIAm());
 				msgBuffer.setResndTime(BigInteger.valueOf(System.currentTimeMillis()));
 				persistor.setEntityToPersist(msgBuffer);
 				new Thread(persistor).start();
-				printConsole("已持久化: " + JSONObject.wrap(msgBuffer).toString());
+				printConsole("已持久化: " + msgBuffer.whoIAm());//JSONObject.wrap(msgBuffer).toString()
 				msgBuffer = null;
 				// 例如单片机中为"rq"，在实体化后该字段为"reqId"
 				// 这里应该在控制台输出实体化过的JSON对象，注意部分成员变量的命名：
 
 			} catch (IllegalArgumentException e) {
 				printConsole("Msg: " + str + " 指令不合法! " + e.getMessage());
-				e.printStackTrace();
+//				e.printStackTrace();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				printConsole("Msg: " + str + " failed resend! " + e.getMessage());
-				e.printStackTrace();
+//				e.printStackTrace();
 			}
 		}
 
@@ -344,6 +346,10 @@ public class PanelServer extends AbstractGridBagPanel {
 			
 			try {
 				/* 这里串口描述符号还是不能写死 */
+				if(serialSelector.trim().equals("")) {
+					//System.out.println("No serialport selected, set as first one");
+					serialSelector=SerialManager.getAllComPort()[0];
+				}
 				tsSerial = new ThreadSerial(serialSelector, baudSelector, serialProc);// 直接赋值并初始化串口
 				trSerial = new Thread(tsSerial);
 				trSerial.start();// 执行串口线程

@@ -141,4 +141,9 @@ public class AgentMsg implements Serializable {
 	public String toJsonString() {
 		return JSONStringer.valueToString(this);
 	}
+	
+	public String whoIAm() {
+		return "bdId: "+this.boardId+" bdTy: "+this.boardType+" reqId: "+this.reqId;
+	}
+	
 }
