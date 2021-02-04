@@ -32,13 +32,14 @@ public class CtrlPersistor extends DatabaseImporter implements Runnable {
 	public void run() {
 		// TODO Auto-generated method stub
 		if (this.persistEntity == null || this == null || !isInit()) {
-			System.out.println(this.persistEntity == null || this == null ? "persistEntity is null!!"
-					: (!isInit() ? "Doesnt init EM" : "other issue"));
+			System.out.println(this.persistEntity == null ? "Entity needed to persist is null!!"
+					: this == null ? "this is null" : (!isInit() ? "Doesnt init EM" : "other issue"));
 			return;
 		}
 
 		try {
 			persistEntity(this.persistEntity);
+			System.out.println("PersistEntity success!: " + this.persistEntity.whoIAm());
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

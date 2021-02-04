@@ -15,7 +15,7 @@ import java.math.BigInteger;
 @Entity
 @Table(name="MAS_Command")
 @NamedQuery(name="AgentMsg.findAll", query="SELECT a FROM AgentMsg a")
-public class AgentMsg implements Serializable {
+public class AgentMsg implements Serializable, Cloneable{
 	private static final long serialVersionUID = 1L;
 
 	@Id
@@ -144,6 +144,12 @@ public class AgentMsg implements Serializable {
 	
 	public String whoIAm() {
 		return "bdId: "+this.boardId+" bdTy: "+this.boardType+" reqId: "+this.reqId;
+	}
+	
+	@Override
+	public AgentMsg clone() throws CloneNotSupportedException {
+		// TODO Auto-generated method stub
+		return (AgentMsg)super.clone();
 	}
 	
 }
